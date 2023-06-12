@@ -1,0 +1,311 @@
+//Home 
+
+import {Component} from 'react'
+import Loader from 'react-loader-spinner'
+import 'react-loader-spinner/dist/loader/css/react-spinner-loader.css'
+import TeamCard from '../TeamCard'
+import './index.css'
+
+class Home extends Component {
+  state = {teamsData: [], isLoading: true}
+
+  componentDidMount() {
+    this.getTeamsList()
+  }
+
+  getTeamsList = async () => {
+    const response = await fetch('https://apis.ccbp.in/ipl')
+    const data = await response.json()
+    const updateData = data.map(eachItem => ({
+      name: eachItem.name,
+      id: eachItem.id,
+      teamImageUrl: eachItem.team_image_url,
+    }))
+    this.setState({teamsData: updateData, isLoading: false})
+  }
+
+  renderTeamsList = () => {
+    const {teamsData} = this.state
+    return (
+      <ul className="team-list-items">
+        {teamsData.map(team => (
+          <TeamCard key={team.id} teamData={team} />
+        ))}
+      </ul>
+    )
+  }
+
+  renderLoader = () => (
+    <div className="loader-container">
+      <Loader type="Rings" color="#00BFFF" height={80} width={80} />
+    </div>
+  )
+
+  render() {
+    const {isLoading} = this.state
+
+    return (
+      <div className="bg-container">
+        <div className="head-container">
+          <img
+            src="https://assets.ccbp.in/frontend/react-js/ipl-logo-img.png "
+            alt="ipl logo"
+            className="ipl-logo"
+          />
+          <h1 className="heading">IPL Dashboard</h1>
+        </div>
+        <div className="team-cards">
+          <div>{isLoading ? this.renderLoader() : this.renderTeamsList()}</div>
+        </div>
+      </div>
+    )
+  }
+}
+
+export default Home
+
+
+//LatestMatch
+
+import {Component} from 'react'
+import './index.css'
+
+class LatestMatch extends Component {
+  render() {
+    const {latestMatch} = this.props
+    const {
+      umpires,
+      result,
+      manOfTheMatch,
+      date,
+      venue,
+      competingTeam,
+      competingTeamLogo,
+      firstInnings,
+      secondInnings,
+    } = latestMatch
+
+    return (
+      <div>
+        <h1 className="para">Latest Matches</h1>
+        <div className="latestMatch">
+          <div className="container-1">
+            <p className="para-1">{competingTeam}</p>
+            <p className="para">{date}</p>
+            <p className="para">{venue}</p>
+            <p className="para">{result}</p>
+          </div>
+          <div className="image-container">
+            <img
+              src={competingTeamLogo}
+              alt={competingTeam}
+              className="image"
+            />
+          </div>
+          <div className="container-2">
+            <div>
+              <p className="para">First Innings</p>
+              <p className="para">{firstInnings}</p>
+            </div>
+            <div>
+              <p className="para">Second Innings</p>
+              <p className="para">{secondInnings}</p>
+            </div>
+            <div>
+              <p className="para">Man Of The Match</p>
+              <p className="para">{manOfTheMatch}</p>
+            </div>
+            <div>
+              <p className="para">umpires</p>
+              <p className="para">{umpires}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+}
+
+export default LatestMatch
+
+
+//MatchCard
+
+import {Component} from 'react'
+
+import './index.css'
+
+class MatchCard extends Component {
+  render() {
+    const {matchData} = this.props
+    const {result, competingTeam, competingTeamLogo, matchStatus} = matchData
+
+    return (
+      <li className="list">
+        <img src={competingTeamLogo} alt={competingTeam} className="logo" />
+        <p className="para-1">{competingTeam}</p>
+        <p className="para-2">{result}</p>
+        <p className="para-2">{matchStatus}</p>
+      </li>
+    )
+  }
+}
+
+export default MatchCard
+
+
+//NotFound
+
+import './index.css'
+
+const NotFound = () => (
+  <div className="container">
+    <h1 className="heading">Page Not Found!!</h1>
+  </div>
+)
+
+export default NotFound
+
+//TeamCard
+
+import {Component} from 'react'
+import {Link} from 'react-router-dom'
+import './index.css'
+
+class TeamCard extends Component {
+  render() {
+    const {teamData} = this.props
+    const {name, id, teamImageUrl} = teamData
+
+    return (
+      <Link to={`/team-matches/${id}`}>
+        <li className="team-card">
+          <img src={teamImageUrl} alt={name} className="team-logo" />
+          <p className="para">{name}</p>
+        </li>
+      </Link>
+    )
+  }
+}
+
+export default TeamCard
+
+
+//TeamMatches
+
+import {Component} from 'react'
+import Loader from 'react-loader-spinner'
+import 'react-loader-spinner/dist/loader/css/react-spinner-loader.css'
+import LatestMatch from '../LatestMatch'
+import MatchCard from '../MatchCard'
+import './index.css'
+
+class TeamMatches extends Component {
+  state = {
+    matchesData: [],
+    isLoading: true,
+  }
+
+  componentDidMount() {
+    this.getTeamMatches()
+  }
+
+  getTeamMatches = async () => {
+    const {match} = this.props
+    const {params} = match
+    const {id} = params
+    const response = await fetch(`https://apis.ccbp.in/ipl/${id}`)
+    const data = await response.json()
+    const updatedData = {
+      teamBannerUrl: data.team_banner_url,
+      latestMatchDetails: {
+        id: data.latest_match_details.id,
+        competingTeam: data.latest_match_details.competing_team,
+        competingTeamLogo: data.latest_match_details.competing_team_logo,
+        date: data.latest_match_details.date,
+        firstInnings: data.latest_match_details.first_innings,
+        manOfTheMatch: data.latest_match_details.man_of_the_match,
+        matchStatus: data.latest_match_details.match_status,
+        result: data.latest_match_details.result,
+        secondInnings: data.latest_match_details.second_innings,
+        Umpires: data.latest_match_details.umpires,
+        venue: data.latest_match_details.venue,
+      },
+      recentMatches: data.recent_matches.map(eachItem => ({
+        Umpires: eachItem.umpires,
+        result: eachItem.result,
+        manOfTheMatch: eachItem.man_of_the_match,
+        id: eachItem.id,
+        date: eachItem.date,
+        venue: eachItem.venue,
+        competingTeam: eachItem.competing_team,
+        competingTeamLogo: eachItem.competing_team_logo,
+        firstInnings: eachItem.first_innings,
+        secondInnings: eachItem.second_innings,
+        matchStatus: eachItem.match_status,
+      })),
+    }
+    this.setState({matchesData: updatedData, isLoading: false})
+  }
+
+  renderTeamMatches = () => {
+    const {matchesData} = this.state
+    const {teamBannerUrl, latestMatchDetails} = matchesData
+    return (
+      <div className="team-matches-container">
+        <img src={teamBannerUrl} alt="team banner" className="team-banner" />
+        <LatestMatch latestMatch={latestMatchDetails} />
+        {this.renderRecentMatchesList()}
+      </div>
+    )
+  }
+
+  renderRecentMatchesList = () => {
+    const {matchesData} = this.state
+    const {recentMatches} = matchesData
+    return (
+      <ul className="recent-matches-list">
+        {recentMatches.map(eachMatch => (
+          <MatchCard matchData={eachMatch} key={eachMatch.id} />
+        ))}
+      </ul>
+    )
+  }
+
+  renderLoader = () => (
+    <div className="loader-container">
+      <Loader type="BallTriangle" color="#00BFFF" height={80} width={80} />
+    </div>
+  )
+
+  render() {
+    const {isLoading} = this.state
+    const {match} = this.props
+    const {params} = match
+    const {id} = params
+    return (
+      <div className={`app-team-matches-container ${id}`}>
+        {isLoading ? this.renderLoader() : this.renderTeamMatches()}
+      </div>
+    )
+  }
+}
+
+export default TeamMatches
+
+
+import {Switch, Route} from 'react-router-dom'
+import Home from './components/Home'
+import TeamMatches from './components/TeamMatches'
+import NotFound from './components/NotFound'
+import './App.css'
+
+const App = () => (
+  <Switch>
+    <Route exact path="/" component={Home} />
+    <Route patch="/team-matches/:id" component={TeamMatches} />
+    <Route component={NotFound} />
+  </Switch>
+)
+
+export default App
